@@ -16,4 +16,6 @@
 
 * Binja Issue to implement MIPS16e/e2 - https://github.com/Vector35/binaryninja-api/issues/4013
 
+* Intro to Architecture Plugin development - https://binary.ninja/2020/01/09/guide-to-architecture-plugins-part1.html
+
 -0wl

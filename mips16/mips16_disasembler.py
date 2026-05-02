@@ -154,6 +154,14 @@ def m16e_bteqz(unpacked_insn):
     out = f"{hex(_imm)}"
     return out
 
+def m16e_btnez(unpacked_insn):
+    # Note that the _rx is not used bc this is a special format
+    _rx, _imm = fmt16_RI(unpacked_insn)
+    _imm = _imm << 1
+    # TODO - add _imm to the address after this instruction
+    out = f"{hex(_imm)}"
+    return out
+
 def m16e_cmpi(unpacked_insn):
     # The 8-bit immediate is zero-extended and Exclusive-ORed with the contents of GPR rx. The result is placed into GPR 24.
     _rx, _imm = fmt16_RI(unpacked_insn)

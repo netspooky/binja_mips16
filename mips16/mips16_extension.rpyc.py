@@ -48,7 +48,7 @@ class MIPSEL16E():
       }
   reg_lookup = ["s0", "s1", "v0", "v1", "a0", "a1", "a2", "a3", "t8", "sp", "ra", "hi", "lo", "pc"]
   stack_pointer = "sp"
-
+  #extend_val = 0
 
   def sign_extend(self, value, from_nbits=None):
     if from_nbits is None:
@@ -57,7 +57,7 @@ class MIPSEL16E():
     low_bits_mask = sign_bit_mask - 1
     return (value & low_bits_mask) - (value & sign_bit_mask)
 
-  def disassemble(self, data):
+  def disassemble(self, data, extend_val=0):
     '''
     * Apply mask to bytes
     * If extended then length +=2
@@ -66,7 +66,7 @@ class MIPSEL16E():
             "args": "",
             "length": 2
     }
-    extend_val = 0
+    #extend_val = 0
     if (len(data) < 2):
       # Invalid length
       return insn
@@ -83,19 +83,26 @@ class MIPSEL16E():
       # index 3 == Mask, index 2 == Match
       if (mips16_insn[3] & unpacked_insn) == mips16_insn[2]:
         insn['insn'] = mips16_insn[0]
+
+        # For Debug
+        #if extend_val != 0:
+        #    print(f"{insn['insn']} EXTEND VAL: {hex(extend_val)}")
+
         #print(f"{hex(unpacked_insn)}")
 
         # Decode Instructions
+        # TODO - add extend_val to all instructions that have it
         if insn['insn'] == 'b': insn['args'] = m16e_b(unpacked_insn)
         if insn['insn'] == 'beqz': insn['args'] = m16e_beqz(unpacked_insn)
         if insn['insn'] == 'bteqz': insn['args'] = m16e_bteqz(unpacked_insn)
         if insn['insn'] == 'btnez': insn['args'] = m16e_btnez(unpacked_insn)
         if insn['insn'] == 'cmpi': insn['args'] = m16e_cmpi(unpacked_insn)
         if insn['insn'] == 'li': insn['args'] = m16e_li(unpacked_insn)
-        if insn['insn'] == 'lw': insn['args'] = m16e_lw(unpacked_insn)
+        if insn['insn'] == 'lw': insn['args'] = m16e_lw(unpacked_insn, extend_val)
         if insn['insn'] == 'move': insn['args'] = m16e_move(unpacked_insn)
-        if insn['insn'] == 'sb': insn['args'] = m16e_sb(unpacked_insn)
-        if insn['insn'] == 'slti': insn['args'] = m16e_slti(unpacked_insn)
+        if insn['insn'] == 'sb': insn['args'] = m16e_sb(unpacked_insn, extend_val)
+        if insn['insn'] == 'slt': insn['args'] = m16e_slt(unpacked_insn)
+        if insn['insn'] == 'slti': insn['args'] = m16e_slti(unpacked_insn, extend_val)
         if insn['insn'] == 'sw': insn['args'] = m16e_sw(unpacked_insn)
 
         if insn['insn'] == 'extend':
@@ -106,10 +113,12 @@ class MIPSEL16E():
           * an abomination of an opcode lol
           '''
           # Disassemble the next two bytes.
-          next_op_code = self.disassemble(data[2::])
+          _extend_val = unpacked_insn & 0x7FF
+          next_op_code = self.disassemble(data[2::], _extend_val)
           insn['insn'] = next_op_code['insn']
           insn['length'] += 2
-          extend_val = unpacked_insn & 0x7FF
+          insn['args'] = next_op_code['args']
+          #print(f"extend found!!! next_op_code: {next_op_code} len: {insn['length']} extend_val = {hex(_extend_val)}")
         else:
           break
         break
@@ -150,7 +159,7 @@ if __name__ == "__main__":
     AEnd = "\x1b[0m"
 
     start_addr = 0x4023b0
-    amount2read = 100
+    amount2read = 500
     print(f"[+] Reading {amount2read} bytes from 0x{start_addr:02x}...")
 
     _data = bv.read(start_addr,amount2read)#24)
@@ -171,7 +180,7 @@ if __name__ == "__main__":
 
         out = ""
         out += f"{(start_addr + _idx):08x} | "
-        #out += f"{A219}{_dis_len}{AEnd} | "
+        out += f"{_dis_len} | "
         if _dis_len == 2:
           _idata_out = struct.unpack("<H", _idata[0:2])[0]
         if _dis_len == 4:

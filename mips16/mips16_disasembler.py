@@ -62,6 +62,18 @@ m32_regmap = [
     [ "ra", 31 ], 
 ]
 
+def extract_extend_val_15_5(extend_val):
+    # handles when
+    # bits 26:21 = imm 10:5 
+    # bits 20:16 = imm 15:11
+    # Which can be OR'd with the bottom 5 bits of the immediate
+    ev1 = extend_val & 0x07E0
+    ev2 = extend_val & 0x001F
+    evo = ev1 | ( ev2 << 11 )
+    #print(f"[+] LW Extend Val: {hex(extend_val)} -- evo {hex(evo)} = ev1({hex(ev1)}) and ev2({hex(ev2)})")
+    return evo
+
+
 def m16e_xlat(i):
     """
     4.1.1.1
@@ -180,12 +192,15 @@ def m16e_li(unpacked_insn):
     out = f"{_rx_name}, {_imm}"
     return out
 
-def m16e_lw(unpacked_insn):
+def m16e_lw(unpacked_insn, extend_val):
+    evo = extract_extend_val_15_5(extend_val) if extend_val > 0 else 0
+
     if (unpacked_insn & 0x9800) == 0x9800:
         #print(f"Load Word - LW ry, offset(rx)")
         _rx, _ry, _imm = fmt16_RRI(unpacked_insn)
         _rx_name = m16e_regmap[_rx][0]
         _imm = _imm << 2
+        _imm = _imm | evo # OR with extend value extracted bits if present
         _ry = m16e_xlat(_ry)
         _ry_name = m32_regmap[_ry][0]
         out = f"{_ry_name}, {_imm}({_rx_name})"
@@ -196,6 +211,7 @@ def m16e_lw(unpacked_insn):
         _rx, _imm = fmt16_RI(unpacked_insn)
         _rx_name = m16e_regmap[_rx][0]
         _imm = _imm << 2
+        _imm = _imm | evo # OR with extend value extracted bits if present
         out = f"{_rx_name}, {_imm}(pc)"
         return out
     if (unpacked_insn & 0x9000) == 0x9000:
@@ -203,6 +219,7 @@ def m16e_lw(unpacked_insn):
         _rx, _imm = fmt16_RI(unpacked_insn)
         _rx_name = m16e_regmap[_rx][0]
         _imm = _imm << 2
+        _imm = _imm | evo # OR with extend value extracted bits if present
         out = f"{_rx_name}, {_imm}(sp)"
         return out
 
@@ -226,27 +243,39 @@ def m16e_move(unpacked_insn):
       out = f"{_r32_name}, {_rz_name}"
     return out
 
-def m16e_sb(unpacked_insn):
+def m16e_sb(unpacked_insn, extend_val):
+    evo = extract_extend_val_15_5(extend_val) if extend_val > 0 else 0
     _rx, _ry, _imm = fmt16_RRI(unpacked_insn)
     _rx_name = m16e_regmap[_rx][0]
     _ry_name = m16e_regmap[_ry][0]
+    _imm = _imm | evo # OR with extend value extracted bits if present
     out = f"{_ry_name}, {_imm}({_rx_name})"
     return out
 
+def m16e_slt(unpacked_insn):
+    _rx, _ry, _imm = fmt16_RRI(unpacked_insn)
+    _rx_name = m16e_regmap[_rx][0]
+    _ry_name = m16e_regmap[_ry][0]
+    out = f"{_rx_name}, {_ry_name}"
+    return out
 
-def m16e_slti(unpacked_insn):
+def m16e_slti(unpacked_insn, extend_val):
+    evo = extract_extend_val_15_5(extend_val) if extend_val > 0 else 0
+
     _rx, _imm = fmt16_RI(unpacked_insn)
     _rx_name = m16e_regmap[_rx][0]
     #_imm = _imm << 1
     # TODO - zero extend
+    _imm = _imm | evo # OR with extend value extracted bits if present
     out = f"{_rx_name}, {_imm}"
     return out
 
 def m16e_sw(unpacked_insn):
     """
-    11011xxx d8 sw -- SW ry, offset(rx)
-    11010xxx d0 sw rx (sp rel) -- SW rx, offset(sp)
-    01100010 62 sw ra (sp rel) -- SW ra, offset(sp) 
+    Handler for:
+      11011xxx (0xd8) sw -- SW ry, offset(rx)
+      11010xxx (0xd0) sw rx (sp rel) -- SW rx, offset(sp)
+      01100010 (0x62) sw ra (sp rel) -- SW ra, offset(sp) 
     """
     if (unpacked_insn & 0xd800) == 0xd800:
         _rx, _ry, _imm = fmt16_RRI(unpacked_insn)

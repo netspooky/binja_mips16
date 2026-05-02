@@ -1,3 +1,216 @@
+
+# index look up for now
+m16e_regmap = [
+    #[ name, idx ]
+    [ "s0", 0 ],
+    [ "s1", 1 ],
+    [ "v0", 2 ],
+    [ "v1", 3 ],
+    [ "a0", 4 ],
+    [ "a1", 5 ],
+    [ "a2", 6 ],
+    [ "a3", 7 ]
+]
+
+m32_regmap = [
+    #[ name, idx ]
+    [ "r0",  0 ],
+    [ "at",  1 ],
+    
+    # Return values
+    [ "v0",  2 ],
+    [ "v1",  3 ],
+    
+    # Arguments
+    [ "a0",  4 ], 
+    [ "a1",  5 ], 
+    [ "a2",  6 ], 
+    [ "a3",  7 ], 
+    
+    # Temp registers
+    [ "t0",  8 ], 
+    [ "t1",  9 ], 
+    [ "t2", 10 ], 
+    [ "t3", 11 ], 
+    [ "t4", 12 ], 
+    [ "t5", 13 ], 
+    [ "t6", 14 ], 
+    [ "t7", 15 ], 
+    
+    # Saved registers
+    [ "s0", 16 ], 
+    [ "s1", 17 ], 
+    [ "s2", 18 ], 
+    [ "s3", 19 ], 
+    [ "s4", 20 ], 
+    [ "s5", 21 ], 
+    [ "s6", 22 ], 
+    [ "s7", 23 ], 
+    
+    # Temp registers
+    [ "t8", 24 ], 
+    [ "t9", 25 ], 
+    
+    # Kernel registers
+    [ "k0", 26 ], 
+    [ "k1", 27 ], 
+    
+    # Special
+    [ "gp", 28 ], 
+    [ "sp", 29 ], 
+    [ "fp", 30 ], 
+    [ "ra", 31 ], 
+]
+
+def m16e_xlat(i):
+    """
+    4.1.1.1
+    The Xlat function translates the MIPS16e register 
+    field ind x to the correct 32-bit MIPS physical 
+    register index. It is used to assure that a value 
+    of 0b000 in a MIPS16e register field maps to GPR 16, 
+    and a value of 0b001 maps to GPR 17. 
+    All other values (0b010 through 0b111) map directly.
+
+    PhyReg <-- Xlat(i)
+
+    PhyReg: Physical Register index in range 0..7
+    i: opcode register field index
+
+    """
+    if i < 2:
+        i = i + 16
+    return i
+
+def fmt16_I(in_data):
+    """
+    3.14.1 I-Type
+    
+    │1│1│1│1│1│1│ │ │ │ │ │ │ │ │ │ │
+    │5│4│3│2│1│0│9│8│7│6│5│4│3│2│1│0│
+    ├─┴─┴─┴─┴─┼─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┤
+    │ op      │ immediate           │
+
+    """
+    _imm = in_data & 0x3FF
+    return _imm
+
+def fmt16_RI(in_data):
+    """
+    3.14.2 RI-Type
+
+    │1│1│1│1│1│1│ │ │ │ │ │ │ │ │ │ │
+    │5│4│3│2│1│0│9│8│7│6│5│4│3│2│1│0│
+    ├─┴─┴─┴─┴─┼─┴─┴─┼─┴─┴─┴─┴─┴─┴─┴─┤
+    │ op      │ rx  │ immediate     │
+
+    """
+    _rx  = in_data >> 8
+    _rx  = _rx & 7
+    _imm = in_data & 0xFF
+    return _rx, _imm
+
+def fmt16_RRI(in_data):
+    """
+    3.14.4 RRI-type instruction forma
+    
+    │1│1│1│1│1│1│ │ │ │ │ │ │ │ │ │ │
+    │5│4│3│2│1│0│9│8│7│6│5│4│3│2│1│0│
+    ├─┴─┴─┴─┴─┼─┴─┴─┼─┴─┴─┼─┴─┴─┴─┴─┤
+    │ op      │ rx  │ ry  │immediate│
+
+    """
+    _rx  = in_data >> 8
+    _rx  = _rx & 7
+
+    _ry  = in_data >> 5
+    _ry  = _ry & 7
+
+    _imm = in_data & 0x1F
+    return _rx, _ry, _imm
+
+### Instruction Decoders
+
+def m16e_b(unpacked_insn):
+    _imm = fmt16_I(unpacked_insn)
+    _imm = _imm << 1
+    # todo - sign extend
+    out = f"{hex(_imm)}"
+    return out
+
+def m16e_beqz(unpacked_insn):
+    _rx, _imm = fmt16_RI(unpacked_insn)
+    _rx_name = m16e_regmap[_rx][0]
+    _imm = _imm << 1
+    # TODO - add _imm to the address after this instruction
+    out = f"{_rx_name}, {hex(_imm)}"
+    return out
+
+def m16e_cmpi(unpacked_insn):
+    # The 8-bit immediate is zero-extended and Exclusive-ORed with the contents of GPR rx. The result is placed into GPR 24.
+    _rx, _imm = fmt16_RI(unpacked_insn)
+    _rx_name = m16e_regmap[_rx][0]
+    # spooky ???
+    #   The datasheet says that it is shift left once, but the binutils objdump doesn't seem to do that
+    #   I left it without this shift for now just to get parity
+    #_imm = _imm << 1
+    out = f"{_rx_name}, {_imm}"
+    return out
+
+
+def m16e_li(unpacked_insn):
+    _rx, _imm = fmt16_RI(unpacked_insn)
+    _rx_name = m16e_regmap[_rx][0]
+    out = f"{_rx_name}, {_imm}"
+    return out
+
+def m16e_lw(unpacked_insn):
+    if (unpacked_insn & 0x9800) == 0x9800:
+        #print(f"Load Word - LW ry, offset(rx)")
+        _rx, _ry, _imm = fmt16_RRI(unpacked_insn)
+        _rx_name = m16e_regmap[_rx][0]
+        _imm = _imm << 2
+        _ry = m16e_xlat(_ry)
+        _ry_name = m32_regmap[_ry][0]
+        out = f"{_ry_name}, {_imm}({_rx_name})"
+        return out
+
+    if (unpacked_insn & 0xb000) == 0xb000:
+        #print("Load Word - LW rx, offset(pc)")
+        _rx, _imm = fmt16_RI(unpacked_insn)
+        _rx_name = m16e_regmap[_rx][0]
+        _imm = _imm << 2
+        out = f"{_rx_name}, {_imm}(pc)"
+        return out
+    if (unpacked_insn & 0x9000) == 0x9000:
+        #print("Load Word - LW rx, offset(sp)")
+        _rx, _imm = fmt16_RI(unpacked_insn)
+        _rx_name = m16e_regmap[_rx][0]
+        _imm = _imm << 2
+        out = f"{_rx_name}, {_imm}(sp)"
+        return out
+
+def m16e_move(unpacked_insn):
+    # if bit 9 is 0, it's MOVE r32, rz
+    # if bit 9 is 1, it's MOVE ry, r32
+    out = ""
+    if unpacked_insn & 0x20:
+      _ry  = ( unpacked_insn >> 5 ) & 7
+      _ry_name = m16e_regmap[_ry][0]
+      _r32 = unpacked_insn & 0x1F
+      _r32_name = m32_regmap[_r32][0]
+      out = f"{_ry_name}, {_r32_name}"
+
+    else:
+      _rz  = unpacked_insn & 7
+      _rz_name = m16e_regmap[_rz][0]
+      _r32 = ( ( unpacked_insn & 0xE ) >> 5 ) & ( unpacked_insn & 0x1C )
+      _r32 = m16e_xlat(_r32)
+      _r32_name = m32_regmap[_r32][0]
+      out = f"{_r32_name}, {_rz_name}"
+    return out
+
+
 mips16_opcodes =[
 #/* name,    args,	match,	mask,	 */
 ["nop",	    "",		0x6500, 0xffff], #/* move $0,$Z */

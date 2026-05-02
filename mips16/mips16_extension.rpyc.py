@@ -85,17 +85,19 @@ class MIPSEL16E():
         insn['insn'] = mips16_insn[0]
         #print(f"{hex(unpacked_insn)}")
 
-        # XXX Demo of some operand extraction
-        # TODO - Generalize based on opcode patterns
-        if insn['insn'] == 'li':
-          _rx = unpacked_insn >> 8
-          _rx = _rx & 3
-          _imm = unpacked_insn & 0xFF
-          insn['args'] = f"rx({_rx}), {_imm}"
-        if insn['insn'] == 'move':
-          _rz  = unpacked_insn & 3
-          _r32 = ( ( unpacked_insn & 0xE ) >> 5 ) & ( unpacked_insn & 0x1C )
-          insn['args'] = f"rz({_rz}), r32({_r32})"
+        # Decode Instructions
+        if insn['insn'] == 'b': insn['args'] = m16e_b(unpacked_insn)
+
+        if insn['insn'] == 'beqz': insn['args'] = m16e_beqz(unpacked_insn)
+        if insn['insn'] == 'cmpi': insn['args'] = m16e_cmpi(unpacked_insn)
+
+        if insn['insn'] == 'li': insn['args'] = m16e_li(unpacked_insn)
+
+        if insn['insn'] == 'lw': insn['args'] = m16e_lw(unpacked_insn)
+
+        if insn['insn'] == 'move': insn['args'] = m16e_move(unpacked_insn)
+
+
         if insn['insn'] == 'extend':
           '''
           Extended OPCODE
@@ -169,6 +171,7 @@ if __name__ == "__main__":
 
         out = ""
         out += f"{A219}len: {_dis_len}{AEnd} | "
+        # todo swap endianness
         out += f"{A226}{_idata.hex()}{_spacing}{AEnd} | "
         out += f"{A159}{_insn}{AEnd} {_args}"
         print(out)

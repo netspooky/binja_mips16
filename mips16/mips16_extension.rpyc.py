@@ -170,9 +170,15 @@ if __name__ == "__main__":
         _spacing = '    ' if _dis_len == 2 else ''
 
         out = ""
-        out += f"{A219}len: {_dis_len}{AEnd} | "
-        # todo swap endianness
-        out += f"{A226}{_idata.hex()}{_spacing}{AEnd} | "
+        out += f"{(start_addr + _idx):08x} | "
+        #out += f"{A219}{_dis_len}{AEnd} | "
+        if _dis_len == 2:
+          _idata_out = struct.unpack("<H", _idata[0:2])[0]
+        if _dis_len == 4:
+          _idata_out = struct.unpack("<H", _idata[0:2])[0]
+          _idata_out = _idata_out << 16
+          _idata_out = _idata_out + struct.unpack("<H", _idata[2:4])[0]
+        out += f"{A226}{_idata_out:02x}{_spacing}{AEnd} | "
         out += f"{A159}{_insn}{AEnd} {_args}"
         print(out)
         _idx = _idx + _dis_out['length']

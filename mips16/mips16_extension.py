@@ -52,7 +52,14 @@ class MIPSEL16E(Architecture):
       # Invalid length
       return insn
     #print(f"[Disassemble] {data}, len: {len(data)}")
-    unpacked_insn = struct.unpack(">H", data[0:2])[0]
+    unpacked_insn = struct.unpack("<H", data[0:2])[0]
+    print(f"[Disassemble] data: {hex(unpacked_insn)}")
+    if unpacked_insn == 0x1a00:
+      # cheap JAL patch for now
+      # TODO fix this properly
+      insn['insn'] = "jal"
+      insn['length'] += 2
+      return insn
     for mips16_insn in mips16_opcodes:
       # index 3 == Mask, index 2 == Match
       if (mips16_insn[3] & unpacked_insn) == mips16_insn[2]:

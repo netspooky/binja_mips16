@@ -229,7 +229,7 @@ def m16e_move(unpacked_insn):
 def m16e_sb(unpacked_insn):
     _rx, _ry, _imm = fmt16_RRI(unpacked_insn)
     _rx_name = m16e_regmap[_rx][0]
-    _ry_name = m32_regmap[_ry][0]
+    _ry_name = m16e_regmap[_ry][0]
     out = f"{_ry_name}, {_imm}({_rx_name})"
     return out
 
@@ -241,6 +241,31 @@ def m16e_slti(unpacked_insn):
     # TODO - zero extend
     out = f"{_rx_name}, {_imm}"
     return out
+
+def m16e_sw(unpacked_insn):
+    """
+    11011xxx d8 sw -- SW ry, offset(rx)
+    11010xxx d0 sw rx (sp rel) -- SW rx, offset(sp)
+    01100010 62 sw ra (sp rel) -- SW ra, offset(sp) 
+    """
+    if (unpacked_insn & 0xd800) == 0xd800:
+        _rx, _ry, _imm = fmt16_RRI(unpacked_insn)
+        _rx_name = m16e_regmap[_rx][0]
+        _ry_name = m16e_regmap[_ry][0]
+        _imm = _imm << 2 # TODO - zero extend
+        out = f"{_ry_name}, {_imm}({_rx_name})"
+        return out
+    if (unpacked_insn & 0xd000) == 0xd000:
+        _rx, _imm = fmt16_RI(unpacked_insn)
+        _rx_name = m16e_regmap[_rx][0]
+        _imm = _imm << 2 # TODO - zero extend
+        out = f"{_rx_name}, {_imm}(sp)"
+        return out
+    if (unpacked_insn & 0x6200) == 0x6200:
+        _rx, _imm = fmt16_RI(unpacked_insn)
+        _imm = _imm << 2 # TODO - zero extend
+        out = f"ra, {_imm}(sp)"
+        return out
 
 
 mips16_opcodes =[

@@ -146,6 +146,14 @@ def m16e_beqz(unpacked_insn):
     out = f"{_rx_name}, {hex(_imm)}"
     return out
 
+def m16e_bteqz(unpacked_insn):
+    # Note that the _rx is not used bc this is a special format
+    _rx, _imm = fmt16_RI(unpacked_insn)
+    _imm = _imm << 1
+    # TODO - add _imm to the address after this instruction
+    out = f"{hex(_imm)}"
+    return out
+
 def m16e_cmpi(unpacked_insn):
     # The 8-bit immediate is zero-extended and Exclusive-ORed with the contents of GPR rx. The result is placed into GPR 24.
     _rx, _imm = fmt16_RI(unpacked_insn)
@@ -208,6 +216,22 @@ def m16e_move(unpacked_insn):
       _r32 = m16e_xlat(_r32)
       _r32_name = m32_regmap[_r32][0]
       out = f"{_r32_name}, {_rz_name}"
+    return out
+
+def m16e_sb(unpacked_insn):
+    _rx, _ry, _imm = fmt16_RRI(unpacked_insn)
+    _rx_name = m16e_regmap[_rx][0]
+    _ry_name = m32_regmap[_ry][0]
+    out = f"{_ry_name}, {_imm}({_rx_name})"
+    return out
+
+
+def m16e_slti(unpacked_insn):
+    _rx, _imm = fmt16_RI(unpacked_insn)
+    _rx_name = m16e_regmap[_rx][0]
+    #_imm = _imm << 1
+    # TODO - zero extend
+    out = f"{_rx_name}, {_imm}"
     return out
 
 

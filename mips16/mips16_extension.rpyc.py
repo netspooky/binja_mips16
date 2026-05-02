@@ -89,6 +89,7 @@ class MIPSEL16E():
         if insn['insn'] == 'b': insn['args'] = m16e_b(unpacked_insn)
 
         if insn['insn'] == 'beqz': insn['args'] = m16e_beqz(unpacked_insn)
+        if insn['insn'] == 'bteqz': insn['args'] = m16e_bteqz(unpacked_insn)
         if insn['insn'] == 'cmpi': insn['args'] = m16e_cmpi(unpacked_insn)
 
         if insn['insn'] == 'li': insn['args'] = m16e_li(unpacked_insn)
@@ -96,6 +97,9 @@ class MIPSEL16E():
         if insn['insn'] == 'lw': insn['args'] = m16e_lw(unpacked_insn)
 
         if insn['insn'] == 'move': insn['args'] = m16e_move(unpacked_insn)
+
+        if insn['insn'] == 'sb': insn['args'] = m16e_sb(unpacked_insn)
+        if insn['insn'] == 'slti': insn['args'] = m16e_slti(unpacked_insn)
 
 
         if insn['insn'] == 'extend':

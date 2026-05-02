@@ -1,0 +1,103 @@
+
+[ Encoding Fields ]
+
+funct or f -- Function field
+immediate or imm -- 4-, 5-, 8-, or 11-bit immediate, branch displacement, or address displacement
+op -- 5-bit major operation code
+rx -- 3-bit source or destination register specifie
+ry -- 3-bit source or destination register specifie
+rz -- 3-bit source or destination register specifie
+sa -- 3- or 5-bit shift amount
+
+---------------------------------------
+
+---------------------------------------
+
+3.14.1 I-Type
+
+│1│1│1│1│1│1│ │ │ │ │ │ │ │ │ │ │
+│5│4│3│2│1│0│9│8│7│6│5│4│3│2│1│0│
+├─┴─┴─┴─┴─┼─┴─┴─┴─┴─┴─┴─┴─┴─┴─┴─┤
+│ op      │ immediate           │
+
+
+
+3.14.2 RI-Type
+
+│1│1│1│1│1│1│ │ │ │ │ │ │ │ │ │ │
+│5│4│3│2│1│0│9│8│7│6│5│4│3│2│1│0│
+├─┴─┴─┴─┴─┼─┴─┴─┼─┴─┴─┴─┴─┴─┴─┴─┤
+│ op      │ rx  │ immediate     │
+
+
+3.14.3 RR-type instruction format
+
+│1│1│1│1│1│1│ │ │ │ │ │ │ │ │ │ │
+│5│4│3│2│1│0│9│8│7│6│5│4│3│2│1│0│
+├─┴─┴─┴─┴─┼─┴─┴─┼─┴─┴─┼─┴─┴─┴─┴─┤
+│ RR      │ rx  │ ry  │ funct   │
+
+1. When the funct field is eithe CNVT or J(AL)R(C), the ry field encodes
+sub-function to be performed rather than a register number
+
+
+3.14.4 RRI-type instruction forma
+
+│1│1│1│1│1│1│ │ │ │ │ │ │ │ │ │ │
+│5│4│3│2│1│0│9│8│7│6│5│4│3│2│1│0│
+├─┴─┴─┴─┴─┼─┴─┴─┼─┴─┴─┼─┴─┴─┴─┴─┤
+│ op      │ rx  │ ry  │immediate│
+
+3.14.5 RRR-type instruction format
+
+│1│1│1│1│1│1│ │ │ │ │ │ │ │ │ │ │
+│5│4│3│2│1│0│9│8│7│6│5│4│3│2│1│0│
+├─┴─┴─┴─┴─┼─┴─┴─┼─┴─┴─┼─┴─┴─┼─┴─┤
+│ RRR     │ rx  │ ry  │ rx  │ f │
+
+
+3.14.6 RRI-A type instruction forma
+
+│1│1│1│1│1│1│ │ │ │ │ │ │ │ │ │ │
+│5│4│3│2│1│0│9│8│7│6│5│4│3│2│1│0│
+├─┴─┴─┴─┴─┼─┴─┴─┼─┴─┴─┼─┼─┴─┴─┴─┤
+│ RRI-A   │ rx  │ ry  │f│ immed.│
+
+3.14.7 Shift instruction format
+
+│1│1│1│1│1│1│ │ │ │ │ │ │ │ │ │ │
+│5│4│3│2│1│0│9│8│7│6│5│4│3│2│1│0│
+├─┴─┴─┴─┴─┼─┴─┴─┼─┴─┴─┼─┴─┴─┼─┴─┤
+│ SHIFT   │ rx  │ ry  │ rx  │ f │
+
+
+3.14.8 I8-type instruction forma
+
+│1│1│1│1│1│1│ │ │ │ │ │ │ │ │ │ │
+│5│4│3│2│1│0│9│8│7│6│5│4│3│2│1│0│
+├─┴─┴─┴─┴─┼─┴─┴─┼─┴─┴─┴─┴─┴─┴─┴─┤
+│ I8      │funct│ immediate     │
+
+3.14.9 I8_MOVR32 instruction format (used only by the MOVR32 instruction)
+
+│1│1│1│1│1│1│ │ │ │ │ │ │ │ │ │ │
+│5│4│3│2│1│0│9│8│7│6│5│4│3│2│1│0│
+├─┴─┴─┴─┴─┼─┴─┴─┼─┴─┴─┼─┴─┴─┴─┴─┤
+│ I8      │funct│ ry  │ r32[4:0 │
+
+3.14.10 I8_MOV32R instruction format (used only by MOV32R instruction)
+
+│1│1│1│1│1│1│ │ │ │ │ │ │ │ │ │ │
+│5│4│3│2│1│0│9│8│7│6│5│4│3│2│1│0│
+├─┴─┴─┴─┴─┼─┴─┴─┼─┴─┴─┴─┴─┴─┼─┴─┤
+│ I8      │funct│r32[2:0,4:3]│rz│
+
+3.14.11 I8_SVRS instruction format (used only by the SAVE and RESTORE instruc-
+tions)
+
+│1│1│1│1│1│1│ │ │ │ │ │ │ │ │ │ │
+│5│4│3│2│1│0│9│8│7│6│5│4│3│2│1│0│
+├─┴─┴─┴─┴─┼─┴─┴─┼─┼─┼─┼─┼─┴─┴─┴─┤
+│ I8      │SVRS │s│r│s│s│frame  │
+│         │     │ │a│0│1│ size  │
+

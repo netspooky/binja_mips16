@@ -91,6 +91,8 @@ class MIPSEL16E(Architecture):
     insn = self.disassemble(data)
     #print(f"[get_instruction_info] addr: 0x{addr:08X}, insn: {insn}")
     result.length = insn['length']
+    if insn['insn'] == 'restore':
+      result.add_branch(BranchType.FunctionReturn)
     return result
 
   def get_instruction_text(self, data, addr):

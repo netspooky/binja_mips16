@@ -83,6 +83,19 @@ class MIPSEL16E():
       # index 3 == Mask, index 2 == Match
       if (mips16_insn[3] & unpacked_insn) == mips16_insn[2]:
         insn['insn'] = mips16_insn[0]
+        #print(f"{hex(unpacked_insn)}")
+
+        # XXX Demo of some operand extraction
+        # TODO - Generalize based on opcode patterns
+        if insn['insn'] == 'li':
+          _rx = unpacked_insn >> 8
+          _rx = _rx & 3
+          _imm = unpacked_insn & 0xFF
+          insn['args'] = f"rx({_rx}), {_imm}"
+        if insn['insn'] == 'move':
+          _rz  = unpacked_insn & 3
+          _r32 = ( ( unpacked_insn & 0xE ) >> 5 ) & ( unpacked_insn & 0x1C )
+          insn['args'] = f"rz({_rz}), r32({_r32})"
         if insn['insn'] == 'extend':
           '''
           Extended OPCODE
@@ -157,7 +170,7 @@ if __name__ == "__main__":
         out = ""
         out += f"{A219}len: {_dis_len}{AEnd} | "
         out += f"{A226}{_idata.hex()}{_spacing}{AEnd} | "
-        out += f"{A159}{_insn}{AEnd} {A226}{_args}{AEnd}"
+        out += f"{A159}{_insn}{AEnd} {_args}"
         print(out)
         _idx = _idx + _dis_out['length']
       except Exception as e:

@@ -142,6 +142,27 @@ def fmt16_RRI(in_data):
     return _rx, _ry, _imm
 
 ### Instruction Decoders
+def m16e_addiu(unpacked_insn, extend_val):
+    # TODO - finish implementing and do better matching
+    out = ""
+    #if (unpacked_insn & 0x4800) == 0x4800:
+    #    # 2 op
+    #    print("ADDIU rx, immediate")
+    #if (unpacked_insn & 0x4000) == 0x4000:
+    #    print("ADDIU ry, rx, immediate")
+    #if (unpacked_insn & 0x0800) == 0x0800:
+    #    print("ADDIU rx, pc, immediate")
+    #if (unpacked_insn & 0x6300) == 0x6300:
+    #    print("ADDIU sp, immediate")
+    #if (unpacked_insn & 0x0000) == 0x0000:
+    #    print("ADDIU rx, sp, immediate ")
+    return out
+
+def m16e_addu(unpacked_insn, extend_val):
+    # TODO - finish implementing
+    out = ""
+    return out
+
 
 def m16e_b(unpacked_insn):
     _imm = fmt16_I(unpacked_insn)
@@ -185,6 +206,10 @@ def m16e_cmpi(unpacked_insn):
     out = f"{_rx_name}, {_imm}"
     return out
 
+def m16e_jal(unpacked_insn):
+    # TODO - add to PC
+    out = f"{hex(unpacked_insn)}"
+    return out
 
 def m16e_li(unpacked_insn):
     _rx, _imm = fmt16_RI(unpacked_insn)
@@ -242,6 +267,33 @@ def m16e_move(unpacked_insn):
       _r32_name = m32_regmap[_r32][0]
       out = f"{_r32_name}, {_rz_name}"
     return out
+
+def m16e_save(unpacked_insn, extend_val):
+    # Example:
+    # save  a0,64,ra,s0-s1
+    evo = extract_extend_val_15_5(extend_val) if extend_val > 0 else 0
+    out = ""
+    _ra = unpacked_insn & 0x40
+    _ra_name = "ra" if _ra else ""
+    _s0 = unpacked_insn & 0x20
+    _s0_name = "s0" if _s0 else ""
+    _s1 = unpacked_insn & 0x10
+    _s1_name = "s1" if _s1 else ""
+    _framesize = unpacked_insn & 0x0F 
+    if _framesize == 0:
+       # NOTE: A framesize value of 0 is interpreted as a stack adjustment of 128.
+        _framesize = 128
+    else:
+        if _ra or _s0 or _s1:
+            _framesize = _framesize * 8
+    # TODO - confirm if a0 is always there
+    out = f"a0,"
+    out += f"{_framesize}"
+    out += f",{_ra_name}"
+    out += f",{_s0_name}-{_s1_name}" 
+
+    return out
+
 
 def m16e_sb(unpacked_insn, extend_val):
     evo = extract_extend_val_15_5(extend_val) if extend_val > 0 else 0

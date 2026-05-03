@@ -74,10 +74,20 @@ class MIPSEL16E():
     unpacked_insn = struct.unpack("<H", data[0:2])[0]
     #print(f"[Disassemble] data: {hex(unpacked_insn)}")
     if unpacked_insn == 0x1a00:
+    #if (unpacked_insn & 0x100) == 0x100 and (unpacked_insn & 0x1800) == 0x1800:
       # cheap JAL patch for now
-      # TODO fix this properly
+      # TODO
+      # - make it relative to the base addr
+      # - fix collision with other similar functions
+      # the current 0x1a00 match includes part of the target addr so it's not the best
       insn['insn'] = "jal"
       insn['length'] += 2
+      jump_target_20_16 = (unpacked_insn & 0x03E0) >> 5
+      jump_target_25_21 = (unpacked_insn & 0x001F) << 5
+      jump_target_15_0 = struct.unpack("<H", data[2:4])[0]
+      jump_target = jump_target_25_21 | jump_target_20_16 | jump_target_15_0
+      jump_target = jump_target << 2
+      insn['args'] = m16e_jal(jump_target)
       return insn
     for mips16_insn in mips16_opcodes:
       # index 3 == Mask, index 2 == Match
@@ -88,10 +98,12 @@ class MIPSEL16E():
         #if extend_val != 0:
         #    print(f"{insn['insn']} EXTEND VAL: {hex(extend_val)}")
 
-        #print(f"{hex(unpacked_insn)}")
+        #print(f"{insn['insn']} -- {hex(unpacked_insn)}")
 
         # Decode Instructions
         # TODO - add extend_val to all instructions that have it
+        if insn['insn'] == 'addiu': insn['args'] = m16e_addiu(unpacked_insn, extend_val)
+        if insn['insn'] == 'addu': insn['args'] = m16e_addu(unpacked_insn, extend_val)
         if insn['insn'] == 'b': insn['args'] = m16e_b(unpacked_insn)
         if insn['insn'] == 'beqz': insn['args'] = m16e_beqz(unpacked_insn)
         if insn['insn'] == 'bteqz': insn['args'] = m16e_bteqz(unpacked_insn)
@@ -100,6 +112,7 @@ class MIPSEL16E():
         if insn['insn'] == 'li': insn['args'] = m16e_li(unpacked_insn)
         if insn['insn'] == 'lw': insn['args'] = m16e_lw(unpacked_insn, extend_val)
         if insn['insn'] == 'move': insn['args'] = m16e_move(unpacked_insn)
+        if insn['insn'] == 'save': insn['args'] = m16e_save(unpacked_insn, extend_val)
         if insn['insn'] == 'sb': insn['args'] = m16e_sb(unpacked_insn, extend_val)
         if insn['insn'] == 'slt': insn['args'] = m16e_slt(unpacked_insn)
         if insn['insn'] == 'slti': insn['args'] = m16e_slti(unpacked_insn, extend_val)
@@ -159,7 +172,7 @@ if __name__ == "__main__":
     AEnd = "\x1b[0m"
 
     start_addr = 0x4023b0
-    amount2read = 500
+    amount2read = 200
     print(f"[+] Reading {amount2read} bytes from 0x{start_addr:02x}...")
 
     _data = bv.read(start_addr,amount2read)#24)
@@ -189,8 +202,11 @@ if __name__ == "__main__":
           _idata_out = _idata_out + struct.unpack("<H", _idata[2:4])[0]
         out += f"{A226}{_idata_out:02x}{_spacing}{AEnd} | "
         out += f"{A159}{_insn}{AEnd} {_args}"
+        #if len(_args) == 0:
+        #    print(out) # debug
         print(out)
         _idx = _idx + _dis_out['length']
       except Exception as e:
         print(f"Error!! {e}")
+        break
 

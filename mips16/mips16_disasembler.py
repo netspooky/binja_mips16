@@ -167,7 +167,7 @@ def m16e_addu(unpacked_insn, extend_val):
 def m16e_b(unpacked_insn):
     _imm = fmt16_I(unpacked_insn)
     _imm = _imm << 1
-    # todo - sign extend
+    # todo - sign extend, pc relative
     out = f"{hex(_imm)}"
     return out
 
@@ -211,8 +211,48 @@ def m16e_jal(unpacked_insn):
     out = f"{hex(unpacked_insn)}"
     return out
 
-def m16e_li(unpacked_insn):
+def m16e_lb(unpacked_insn, extend_val):
+    evo = extract_extend_val_15_5(extend_val) if extend_val > 0 else 0
+    _rx, _ry, _imm = fmt16_RRI(unpacked_insn)
+    _rx_name = m16e_regmap[_rx][0]
+    _ry_name = m16e_regmap[_ry][0]
+    _imm = _imm | evo # OR with extend value extracted bits if present
+    out = f"{_ry_name}, {_imm}({_rx_name})"
+    return out
+
+def m16e_lbu(unpacked_insn, extend_val):
+    evo = extract_extend_val_15_5(extend_val) if extend_val > 0 else 0
+    _rx, _ry, _imm = fmt16_RRI(unpacked_insn)
+    _rx_name = m16e_regmap[_rx][0]
+    _ry_name = m16e_regmap[_ry][0]
+    _imm = _imm | evo # OR with extend value extracted bits if present
+    out = f"{_ry_name}, {_imm}({_rx_name})"
+    return out
+
+def m16e_lh(unpacked_insn, extend_val):
+    evo = extract_extend_val_15_5(extend_val) if extend_val > 0 else 0
+    _rx, _ry, _imm = fmt16_RRI(unpacked_insn)
+    _rx_name = m16e_regmap[_rx][0]
+    _ry_name = m16e_regmap[_ry][0]
+    _imm = _imm << 1
+    _imm = _imm | evo # OR with extend value extracted bits if present
+    out = f"{_ry_name}, {_imm}({_rx_name})"
+    return out
+
+def m16e_lhu(unpacked_insn, extend_val):
+    evo = extract_extend_val_15_5(extend_val) if extend_val > 0 else 0
+    _rx, _ry, _imm = fmt16_RRI(unpacked_insn)
+    _rx_name = m16e_regmap[_rx][0]
+    _ry_name = m16e_regmap[_ry][0]
+    _imm = _imm << 1
+    _imm = _imm | evo # OR with extend value extracted bits if present
+    out = f"{_ry_name}, {_imm}({_rx_name})"
+    return out
+
+def m16e_li(unpacked_insn, extend_val):
+    evo = extract_extend_val_15_5(extend_val) if extend_val > 0 else 0
     _rx, _imm = fmt16_RI(unpacked_insn)
+    _imm = _imm | evo # OR with extend value extracted bits if present
     _rx_name = m16e_regmap[_rx][0]
     out = f"{_rx_name}, {_imm}"
     return out

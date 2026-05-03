@@ -120,7 +120,7 @@ class MIPSEL16E():
         if insn['insn'] == 'sb': insn['args'] = m16e_sb(unpacked_insn, extend_val)
         if insn['insn'] == 'slt': insn['args'] = m16e_slt(unpacked_insn)
         if insn['insn'] == 'slti': insn['args'] = m16e_slti(unpacked_insn, extend_val)
-        if insn['insn'] == 'sw': insn['args'] = m16e_sw(unpacked_insn)
+        if insn['insn'] == 'sw': insn['args'] = m16e_sw(unpacked_insn, extend_val)
 
         if insn['insn'] == 'extend':
           '''

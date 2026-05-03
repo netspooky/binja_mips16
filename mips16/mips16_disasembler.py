@@ -196,6 +196,7 @@ def m16e_btnez(unpacked_insn):
     return out
 
 def m16e_cmpi(unpacked_insn):
+    # TODO - extend version which uses a different instruction format
     # The 8-bit immediate is zero-extended and Exclusive-ORed with the contents of GPR rx. The result is placed into GPR 24.
     _rx, _imm = fmt16_RI(unpacked_insn)
     _rx_name = m16e_regmap[_rx][0]
@@ -362,29 +363,40 @@ def m16e_slti(unpacked_insn, extend_val):
     out = f"{_rx_name}, {_imm}"
     return out
 
-def m16e_sw(unpacked_insn):
+def m16e_sw(unpacked_insn,extend_val):
     """
     Handler for:
       11011xxx (0xd8) sw -- SW ry, offset(rx)
       11010xxx (0xd0) sw rx (sp rel) -- SW rx, offset(sp)
       01100010 (0x62) sw ra (sp rel) -- SW ra, offset(sp) 
     """
+    evo = extract_extend_val_15_5(extend_val) if extend_val > 0 else 0
+
     if (unpacked_insn & 0xd800) == 0xd800:
         _rx, _ry, _imm = fmt16_RRI(unpacked_insn)
         _rx_name = m16e_regmap[_rx][0]
         _ry_name = m16e_regmap[_ry][0]
-        _imm = _imm << 2 # TODO - zero extend
+        if evo:
+            _imm = _imm | evo # OR with extend value extracted bits if present
+        else:
+            _imm = _imm << 2 # TODO - zero extend
         out = f"{_ry_name}, {_imm}({_rx_name})"
         return out
     if (unpacked_insn & 0xd000) == 0xd000:
         _rx, _imm = fmt16_RI(unpacked_insn)
         _rx_name = m16e_regmap[_rx][0]
-        _imm = _imm << 2 # TODO - zero extend
+        if evo:
+            _imm = _imm | evo # OR with extend value extracted bits if present
+        else:
+            _imm = _imm << 2 # TODO - zero extend
         out = f"{_rx_name}, {_imm}(sp)"
         return out
     if (unpacked_insn & 0x6200) == 0x6200:
         _rx, _imm = fmt16_RI(unpacked_insn)
-        _imm = _imm << 2 # TODO - zero extend
+        if evo:
+            _imm = _imm | evo # OR with extend value extracted bits if present
+        else:
+            _imm = _imm << 2 # TODO - zero extend
         out = f"ra, {_imm}(sp)"
         return out
 

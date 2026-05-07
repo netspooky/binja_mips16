@@ -148,15 +148,21 @@ def m16e_addiu(unpacked_insn, extend_val):
     #if (unpacked_insn & 0x4800) == 0x4800:
     #    # 2 op
     #    print("ADDIU rx, immediate")
-    #if (unpacked_insn & 0x4000) == 0x4000:
-    #    print("ADDIU ry, rx, immediate")
+    if (unpacked_insn & 0x4000) == 0x4000:
+        #print("ADDIU ry, rx, immediate")
+        _rx, _ry, _imm = fmt16_RRI(unpacked_insn)
+        _rx_name = m16e_regmap[_rx][0]
+        _ry_name = m16e_regmap[_ry][0]
+        out = f"{_ry_name}, {_rx_name}, {_imm}"
+        return out
+
     #if (unpacked_insn & 0x0800) == 0x0800:
     #    print("ADDIU rx, pc, immediate")
     #if (unpacked_insn & 0x6300) == 0x6300:
     #    print("ADDIU sp, immediate")
     #if (unpacked_insn & 0x0000) == 0x0000:
     #    print("ADDIU rx, sp, immediate ")
-    return out
+    #return out
 
 def m16e_addu(unpacked_insn, extend_val):
     # TODO - finish implementing
